@@ -3,18 +3,6 @@
   "productName": "ParlerDev",
   "identifier": "com.melvynx.parler.dev",
   "app": {
-    "windows": [
-      {
-        "label": "main",
-        "title": "ParlerDev",
-        "width": 680,
-        "height": 570,
-        "minWidth": 680,
-        "minHeight": 570,
-        "resizable": true,
-        "maximizable": false,
-        "visible": false
-      }
-    ]
+    "windows": []
   }
 }
