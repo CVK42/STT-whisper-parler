@@ -28,6 +28,9 @@ dist-ssr
 
 .claude/
 
+# Claude skill-generated docs (specs/plans) - not part of the software
+docs/superpowers/
+
 /target/
 recording_*
 .crush/
