@@ -190,8 +190,8 @@
             "description": "Opens the app window and navigates to the History tab."
           },
           "copy_latest_history": {
-            "name": "Copy Latest History",
-            "description": "Copies the latest transcription entry to your clipboard."
+            "name": "Copy & Paste Latest History",
+            "description": "Copies the latest transcription entry to your clipboard and pastes it into the active application."
           }
         },
         "errors": {

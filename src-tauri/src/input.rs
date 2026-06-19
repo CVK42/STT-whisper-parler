@@ -111,6 +111,20 @@ pub fn send_paste_shift_insert(enigo: &mut Enigo) -> Result<(), String> {
     Ok(())
 }
 
+/// Releases the common modifier keys (Ctrl, Shift, Alt, Meta) in case they are
+/// still being physically held down — e.g. when a paste is triggered from a
+/// hotkey that itself uses Ctrl (like the "copy & paste latest history"
+/// shortcut). Without this, the simulated Ctrl+V collides with the held key and
+/// the paste fails. Errors are ignored: releasing a key that isn't pressed is a
+/// harmless no-op.
+pub fn release_modifiers(enigo: &mut Enigo) {
+    use enigo::Direction::Release;
+    let _ = enigo.key(Key::Control, Release);
+    let _ = enigo.key(Key::Shift, Release);
+    let _ = enigo.key(Key::Alt, Release);
+    let _ = enigo.key(Key::Meta, Release);
+}
+
 /// Pastes text directly using the enigo text method.
 /// This tries to use system input methods if possible, otherwise simulates keystrokes one by one.
 pub fn paste_text_direct(enigo: &mut Enigo, text: &str) -> Result<(), String> {

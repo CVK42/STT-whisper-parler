@@ -92,10 +92,11 @@ pub fn handle_shortcut_event(
         return;
     }
 
-    // Copy Latest History: copy the most recent transcription to clipboard
+    // Copy Latest History: copy the most recent transcription to the clipboard
+    // AND paste it into the currently focused application.
     if binding_id == "copy_latest_history" {
         if is_pressed {
-            crate::tray::copy_last_transcript(app);
+            crate::tray::copy_and_paste_last_transcript(app);
         }
         return;
     }

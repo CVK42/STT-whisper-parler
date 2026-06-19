@@ -230,28 +230,38 @@ pub fn set_tray_visibility(app: &AppHandle, visible: bool) {
     }
 }
 
-pub fn copy_last_transcript(app: &AppHandle) {
+/// Fetches the text of the most recent completed transcription, or `None`
+/// (logging the reason) when there is nothing usable to copy/paste.
+fn last_completed_transcript_text(app: &AppHandle) -> Option<String> {
     let history_manager = app.state::<Arc<HistoryManager>>();
     let entry = match history_manager.get_latest_completed_entry() {
         Ok(Some(entry)) => entry,
         Ok(None) => {
-            warn!("No completed transcription history entries available for tray copy.");
-            return;
+            warn!("No completed transcription history entries available.");
+            return None;
         }
         Err(err) => {
             error!(
                 "Failed to fetch last completed transcription entry: {}",
                 err
             );
-            return;
+            return None;
         }
     };
 
     let text = last_transcript_text(&entry);
     if text.trim().is_empty() {
-        warn!("Last completed transcription is empty; skipping tray copy.");
-        return;
+        warn!("Last completed transcription is empty; skipping.");
+        return None;
     }
+
+    Some(text.to_string())
+}
+
+pub fn copy_last_transcript(app: &AppHandle) {
+    let Some(text) = last_completed_transcript_text(app) else {
+        return;
+    };
 
     if let Err(err) = app.clipboard().write_text(text) {
         error!("Failed to copy last transcript to clipboard: {}", err);
@@ -259,6 +269,39 @@ pub fn copy_last_transcript(app: &AppHandle) {
     }
 
     info!("Copied last transcript to clipboard via tray.");
+}
+
+/// Copies the most recent transcription to the clipboard AND pastes it into the
+/// currently focused application, using the user's configured paste settings.
+pub fn copy_and_paste_last_transcript(app: &AppHandle) {
+    let Some(text) = last_completed_transcript_text(app) else {
+        return;
+    };
+
+    // Copy to the clipboard first so the text is available there as well.
+    if let Err(err) = app.clipboard().write_text(text.clone()) {
+        error!("Failed to copy last transcript to clipboard: {}", err);
+        return;
+    }
+
+    // This is triggered from a hotkey that may use Ctrl (e.g. Ctrl+Q), which is
+    // likely still held down. Release any held modifier keys before pasting so
+    // the simulated Ctrl+V isn't corrupted, then give the OS a brief moment.
+    if let Some(enigo_state) = app.try_state::<crate::input::EnigoState>() {
+        if let Ok(mut enigo) = enigo_state.0.lock() {
+            crate::input::release_modifiers(&mut enigo);
+        }
+    }
+    std::thread::sleep(std::time::Duration::from_millis(120));
+
+    // Then paste it into the active application (respects paste method,
+    // auto-submit, trailing space, etc. from settings).
+    if let Err(err) = crate::clipboard::paste(text, app.clone()) {
+        error!("Failed to paste last transcript: {}", err);
+        return;
+    }
+
+    info!("Copied and pasted last transcript.");
 }
 
 #[cfg(test)]
